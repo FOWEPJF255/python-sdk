@@ -243,6 +243,16 @@ class MessageHandlerFnT(Protocol):
 
 
 async def _default_message_handler(message: IncomingMessage) -> None:
+    """Acknowledge server notifications; re-raise transport-level exceptions.
+
+    Transport ``Exception`` items (e.g. ``httpx.ReadTimeout`` from
+    ``streamablehttp_client`` when ``sse_read_timeout`` fires) must not be
+    silently discarded. Re-raising lets ``_deliver_stream_exception`` log at
+    ERROR. Custom ``message_handler`` callables are unchanged. See
+    https://github.com/modelcontextprotocol/python-sdk/issues/1401.
+    """
+    if isinstance(message, Exception):
+        raise message
     await anyio.lowlevel.checkpoint()
 
 
